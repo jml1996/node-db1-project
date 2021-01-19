@@ -33,20 +33,24 @@ router.post('/', checkPayload, async (req, res, next) => {
 router.put('/:id', checkId, checkPayload, async (req, res, next) => {
   try {
     const data = await Account.update(req.params.id, req.body)
-    res.status(200).json(data)
+    console.log(data)
+    res.status(200).json({ message: `Account with id ${req.params.id} has been updated` })
   } catch (err) {
     next(err)
   }
 })
 
-router.delete('/:id', checkId, async (req, res, next) => {
-  try {
-    const data = await Account.remove(req.params.id)
-    console.log(data)
-    res.status(200).json(data)
-  } catch (err) {
-    next(err)
-  }
+router.delete('/:id', checkId, (req, res, next) => {
+    Account.remove(req.params.id)
+        .then(() => {
+            res.status(200).json({ message: `Account with id ${req.params.id} has been deleted` })
+        })
+        .catch(error => {
+            console.log(error)
+            res.status(500).json({
+                message: 'Error deleting account'
+            })
+        })
 })
 
 router.use((err, req, res, next) => {
@@ -57,15 +61,13 @@ async function checkId(req, res, next) {
     try {
         const accountInstance = await Account.getById(req.params.id)
         if (accountInstance) {
-        //   req.account = accountInstance
-          next()
+            next()
         } else {
           res.status(404).json({ message: `Account with id ${req.params.id} not found.` })
         }
     } catch (error) {
         res.status(500).json({ error: 'Error getting account by id.' })
     }
-  next()
 }
 
 function checkPayload(req, res, next) {
